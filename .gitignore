@@ -1,0 +1,45 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/.env.local
+
+# Backend
+backend/node_modules/
+backend/.env.local
+backend/.env.example
+backend/config/constants.js
+*.sql
+ *.md 
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+frontend/.env.*.local
+frontend/out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,27 @@
+{
+  "name": "calendar-api",
+  "version": "1.0.0",
+  "description": "Social Media Calendar API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node migrations.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.3.1",
+    "express": "^4.22.1",
+    "jwt-simple": "^0.5.6",
+    "morgan": "^1.10.1",
+    "nodemailer": "^8.0.1",
+    "nodemon": "^3.1.14",
+    "openai": "^4.28.4",
+    "pg": "^8.11.3",
+    "uuid": "^9.0.1"
+  }
+}
