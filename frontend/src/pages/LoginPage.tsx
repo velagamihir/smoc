@@ -16,7 +16,7 @@ export default function LoginPage() {
     setLoading(false);
     if (res) {
       if (res === "super_admin") {
-        navigate("/super_admin/dashboard");
+        navigate("/super_admin/dashboard", { replace: true });
       } else {
         navigate("/app");
       }
