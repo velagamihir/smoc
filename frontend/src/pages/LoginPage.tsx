@@ -12,12 +12,16 @@ export default function LoginPage() {
   const handleSignIn = async (email: string, password: string) => {
     setError(null);
     setLoading(true);
-    const err = await signIn(email, password);
+    const res = await signIn(email, password);
     setLoading(false);
-    if (err) {
-      setError(err);
+    if (res) {
+      if (res === "super_admin") {
+        navigate("/super_admin/dashboard");
+      } else {
+        navigate("/app");
+      }
     } else {
-      navigate("/app");
+      navigate("/");
     }
   };
 

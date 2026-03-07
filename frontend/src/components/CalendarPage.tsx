@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronDownIcon,
   LogOutIcon,
+  UserPlus,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarGrid } from "../components/CalendarGrid";
@@ -15,11 +16,6 @@ import { getPosts } from "../lib/api";
 import { Post } from "../types/post";
 import { useAuth } from "../contexts/AuthContext";
 import { cn } from "../lib/utils";
-
-const FETCH_MONTHS = [
-  { month: 2, year: 2026 },
-  { month: 3, year: 2026 },
-];
 
 function toLocalDateStr(date: Date): string {
   const y = date.getFullYear();
@@ -57,6 +53,7 @@ export function CalendarPage() {
   const time = new Date();
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const isManager = profile?.role === "manager";
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(time);
   const [clientDropOpen, setClientDropOpen] = useState(false);
@@ -66,15 +63,30 @@ export function CalendarPage() {
     if (!loading && !profile) navigate("/login");
   }, [loading, profile, navigate]);
 
+  // Auto-select first client if manager has no active client
+  useEffect(() => {
+    if (
+      profile?.role === "manager" &&
+      managerClients.length > 0 &&
+      !activeBrandId
+    ) {
+      setActiveBrandId(managerClients[0].client_id);
+    }
+  }, [profile?.role, managerClients, activeBrandId, setActiveBrandId]);
+
   const fetchPosts = useCallback(async () => {
-    if (!activeBrandId) return;
-    const results = await Promise.all(
-      FETCH_MONTHS.map(({ month, year }) =>
-        getPosts(activeBrandId, month, year),
-      ),
-    );
-    setPosts(results.flat());
-  }, [activeBrandId]);
+    const clientId = isManager ? activeBrandId : profile?.id;
+    if (!clientId) return;
+    const month = currentMonth.getMonth() + 1;
+    const year = currentMonth.getFullYear();
+
+    try {
+      const results = await getPosts(clientId, month, year);
+      setPosts(results);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+    }
+  }, [isManager, activeBrandId, profile?.id, currentMonth]);
 
   useEffect(() => {
     fetchPosts();
@@ -118,9 +130,11 @@ export function CalendarPage() {
   ).length;
 
   // Active client label for manager dropdown
-  const activeClient = managerClients.find((c) => c.brand_id === activeBrandId);
+  const activeClient = managerClients.find(
+    (c) => c.client_id === activeBrandId,
+  );
   const activeBrandName =
-    activeClient?.brand?.name ?? profile?.full_name ?? "Calendar";
+    activeClient?.client_profile?.full_name ?? profile?.full_name ?? "Calendar";
 
   if (loading || !profile) {
     return (
@@ -166,20 +180,20 @@ export function CalendarPage() {
                     <div className="absolute top-10 left-0 z-50 min-w-[180px] rounded-xl border border-border/40 bg-background shadow-xl overflow-hidden">
                       {managerClients.map((mc) => (
                         <button
-                          key={mc.brand_id}
+                          key={mc.client_id}
                           onClick={() => {
-                            setActiveBrandId(mc.brand_id);
+                            setActiveBrandId(mc.client_id);
                             setClientDropOpen(false);
                           }}
                           className={cn(
                             "w-full text-left px-4 py-2.5 text-sm hover:bg-accent/30 transition-colors",
-                            mc.brand_id === activeBrandId &&
+                            mc.client_id === activeBrandId &&
                               "text-violet-400 font-medium",
                           )}
                         >
-                          {mc.brand?.name}
+                          {mc.client_profile?.full_name}
                           <span className="block text-[10px] text-muted-foreground font-normal">
-                            {mc.client_profile?.full_name}
+                            {mc.client_profile?.email}
                           </span>
                         </button>
                       ))}
@@ -233,6 +247,17 @@ export function CalendarPage() {
                 month
               </span>
             </div>
+
+            {/* Create Client button - only for managers */}
+            {profile.role === "manager" && (
+              <Button
+                onClick={() => navigate("/manager/create-client")}
+                className="h-7 px-3 text-xs flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                <UserPlus className="size-3.5" />
+                Create Client
+              </Button>
+            )}
 
             {/* User + logout */}
             <div className="flex items-center gap-2 pl-3 border-l border-border/40">

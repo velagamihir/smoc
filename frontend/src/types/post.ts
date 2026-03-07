@@ -38,6 +38,7 @@ export interface PostCreatePayload {
   creative?: string | null; // base64 encoded image
   status?: PostStatus;
   brand_id?: string;
+  client_id?: string;
 }
 
 export interface PostUpdatePayload extends Partial<PostCreatePayload> {}

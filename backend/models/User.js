@@ -55,15 +55,39 @@ export class User {
 
   /**
    * Create a new user with hashed password
+   * @param {string} username - User's username
+   * @param {string} email - User's email
+   * @param {string} fullName - User's full name
+   * @param {string} password - User's password (will be hashed)
+   * @param {string} role - User's role (client, manager, super_admin)
+   * @param {string} managerId - Optional: Manager ID if user is a client being created by a manager
    */
-  static async create(username, email, fullName, password, role = "client") {
+  static async create(
+    username,
+    email,
+    fullName,
+    password,
+    role = "client",
+    managerId = null,
+  ) {
     const result = await query(
-      `INSERT INTO users (username, email, full_name, password_hash, role)
-       VALUES ($1, $2, $3, crypt($4, gen_salt('bf')), $5)
-       RETURNING id, username, email, full_name, role, is_active, created_at`,
-      [username, email, fullName, password, role],
+      `INSERT INTO users (username, email, full_name, password_hash, role, manager_id)
+       VALUES ($1, $2, $3, crypt($4, gen_salt('bf')), $5, $6)
+       RETURNING id, username, email, full_name, role, manager_id, is_active, created_at`,
+      [username, email, fullName, password, role, managerId],
     );
     return result.rows[0];
+  }
+
+  /**
+   * Find all clients for a manager
+   */
+  static async findClientsByManagerId(managerId) {
+    const result = await query(
+      "SELECT id, username, email, full_name, role, manager_id, is_active, created_at FROM users WHERE manager_id = $1 AND role = 'client'",
+      [managerId],
+    );
+    return result.rows;
   }
 
   /**

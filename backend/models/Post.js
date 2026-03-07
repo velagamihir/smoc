@@ -5,10 +5,16 @@ export class Post {
    * List all posts with optional filters
    */
   static async findAll(filters = {}) {
-    const { brand_id, month, year } = filters;
+    const { brand_id, month, year, client_id } = filters;
     let sql = "SELECT * FROM posts WHERE brand_id = $1";
     const params = [brand_id];
     let paramIdx = 2;
+
+    if (client_id) {
+      sql += ` AND client_id = $${paramIdx}`;
+      params.push(client_id);
+      paramIdx++;
+    }
 
     if (month && year) {
       const fromDate = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -41,6 +47,7 @@ export class Post {
     const {
       id,
       brand_id,
+      client_id,
       post_date,
       day_of_week,
       content_bucket,
@@ -59,14 +66,15 @@ export class Post {
 
     const result = await query(
       `INSERT INTO posts
-       (id, brand_id, post_date, day_of_week, content_bucket,
+       (id, brand_id, client_id, post_date, day_of_week, content_bucket,
         format_label, format_type, format_variant, slide_count,
         headline, body_copy, visual_brief, caption, creative_link, creative, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
        RETURNING *`,
       [
         id,
         brand_id,
+        client_id,
         post_date,
         day_of_week,
         content_bucket,

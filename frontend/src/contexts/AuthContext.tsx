@@ -5,6 +5,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import axios from "axios";
 import { Profile, ManagerClient } from "../types/auth";
 
 const BASE = "http://localhost:8000";
@@ -14,6 +15,7 @@ interface Session {
   token: string;
   user_id: string;
   full_name: string;
+  email: string;
   role: "manager" | "client";
   brand_id: string;
   manager_clients: ManagerClient[];
@@ -35,6 +37,7 @@ function sessionToProfile(s: Session): Profile {
   return {
     id: s.user_id,
     full_name: s.full_name,
+    email: s.email,
     role: s.role,
     created_at: "",
   };
@@ -59,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const s: Session = JSON.parse(raw);
         applySession(s);
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error("Error loading session from localStorage:", error);
     } finally {
       setLoading(false);
     }
@@ -71,22 +74,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
   ): Promise<string | null> => {
     try {
-      const res = await fetch(`${BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await axios.post(`${BASE}/auth/login`, {
+        email,
+        password,
       });
-      console.log(BASE);
-      if (!res.ok) {
-        const err = await res.text();
-        return err || "Invalid credentials";
-      }
-      const s: Session = await res.json();
+      const s: Session = response.data;
       localStorage.setItem(SESSION_KEY, JSON.stringify(s));
       applySession(s);
-      return null;
-    } catch {
-      return "Could not connect to server";
+      return response.data.role;
+    } catch (error) {
+      if (error.response) {
+        // Server responded with error status
+        console.error("Sign in failed with server error:", error.response.data);
+        return error.response.data || "Invalid credentials";
+      } else if (error.request) {
+        // Network error
+        console.error("Sign in network error:", error);
+        return "Could not connect to server";
+      } else {
+        // Other error
+        console.error("Sign in error:", error);
+        return null;
+      }
     }
   };
 

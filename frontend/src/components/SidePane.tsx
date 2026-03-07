@@ -70,7 +70,7 @@ export function SidePane({
         ) : isManager ? (
           <PostForm
             date={selectedDate}
-            brandId={activeBrandId ?? ""}
+            clientId={activeBrandId || undefined}
             onSave={onPostCreated}
           />
         ) : (

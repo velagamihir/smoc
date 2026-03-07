@@ -6,12 +6,18 @@ export class PostController {
    */
   static async getAllPosts(req, res, next) {
     try {
-      const { brand_id, month, year } = req.query;
+      const { brand_id, month, year, client_id } = req.query;
       const filters = {};
 
       if (brand_id) filters.brand_id = brand_id;
       if (month) filters.month = parseInt(month);
       if (year) filters.year = parseInt(year);
+      if (client_id) filters.client_id = client_id;
+
+      // If user is client, only show their posts
+      if (req.user.role === "client") {
+        filters.client_id = req.user.id;
+      }
 
       const posts = await PostService.getAllPosts(filters);
       res.json(posts);
@@ -38,7 +44,7 @@ export class PostController {
    */
   static async createPost(req, res, next) {
     try {
-      const post = await PostService.createPost(req.body);
+      const post = await PostService.createPost(req.body, req.user.id);
       res.status(201).json(post);
     } catch (error) {
       res.status(400).json({ error: error.message });

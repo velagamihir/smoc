@@ -14,11 +14,11 @@ import { PostCreatePayload, FormatType, PostStatus } from "../types/post";
 
 interface PostFormProps {
   date: Date;
-  brandId: string;
+  clientId?: string;
   onSave: () => void;
 }
 
-export function PostForm({ date, brandId, onSave }: PostFormProps) {
+export function PostForm({ date, clientId, onSave }: PostFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +76,8 @@ export function PostForm({ date, brandId, onSave }: PostFormProps) {
         caption: caption || null,
         creative: creative || null,
         status,
-        brand_id: brandId,
+        brand_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        client_id: clientId,
       };
       await createPost(payload);
       onSave();

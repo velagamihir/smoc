@@ -58,4 +58,58 @@ export function requireManager(req, res, next) {
   next();
 }
 
+/**
+ * Higher-order middleware for role-based authorization
+ * If authorizedRoles is not provided or empty array, route is open (no authentication required)
+ * Otherwise, validates JWT token and checks if user has one of the authorized roles
+ *
+ * @param {string[]} authorizedRoles - Array of roles allowed to access the route (e.g., ["admin", "manager"])
+ * @returns {function} Express middleware function
+ *
+ * Usage:
+ *   // Protected route - only managers and admins
+ *   router.get('/protected', authorizeRoles(['manager', 'admin']), controller);
+ *
+ *   // Open route - no authentication needed
+ *   router.get('/public', authorizeRoles(), controller);
+ */
+export function authorizeRoles(authorizedRoles = []) {
+  return (req, res, next) => {
+    // Normalize authorizedRoles to an array
+    if (!Array.isArray(authorizedRoles)) {
+      authorizedRoles = authorizedRoles ? [authorizedRoles] : [];
+    }
+
+    // If no roles specified, route is open
+    if (!authorizedRoles || authorizedRoles.length === 0) {
+      return next();
+    }
+
+    // If roles are specified, require authentication
+    const token = getToken(req);
+
+    if (!token) {
+      return res.status(401).json({ error: "Missing auth token" });
+    }
+
+    const user = verifyToken(token);
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ error: "Invalid or expired token — please log in again" });
+    }
+
+    // Check if user's role is in authorized roles
+    if (!authorizedRoles.includes(user.role)) {
+      return res.status(403).json({
+        error: `Access denied. Required roles: ${authorizedRoles.join(", ")}`,
+      });
+    }
+
+    req.user = user;
+    next();
+  };
+}
+
 export { verifyToken, getToken };
