@@ -11,7 +11,7 @@ import {
 import { Separator } from "../components/ui/separator";
 import { createPost } from "../lib/api";
 import { PostCreatePayload, FormatType, PostStatus } from "../types/post";
-
+import { useAuth } from "@/contexts/AuthContext";
 interface PostFormProps {
   date: Date;
   clientId?: string;
@@ -19,6 +19,7 @@ interface PostFormProps {
 }
 
 export function PostForm({ date, clientId, onSave }: PostFormProps) {
+  const { profile, managerClients } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const dayOfWeek = dayNames[date.getDay()];
-  const postDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const postDateStr = toLocalDateStr(date);
 
   const buildFormatLabel = () => {
     if (formatType === "static") {
@@ -56,11 +57,17 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
     reader.onload = () => setCreative(reader.result as string);
     reader.readAsDataURL(file);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!clientId) {
+      setError("Client not selected");
+      return;
+    }
+
     setError(null);
     setLoading(true);
+
     try {
       const payload: PostCreatePayload = {
         post_date: postDateStr,
@@ -76,9 +83,10 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
         caption: caption || null,
         creative: creative || null,
         status,
-        brand_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        brand_id: clientId,
         client_id: clientId,
       };
+
       await createPost(payload);
       onSave();
     } catch (err: unknown) {

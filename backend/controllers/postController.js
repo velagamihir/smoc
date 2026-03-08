@@ -19,6 +19,11 @@ export class PostController {
         filters.client_id = req.user.id;
       }
 
+      // If user is manager, only show posts they created
+      if (req.user.role === "manager") {
+        filters.manager_id = req.user.id;
+      }
+
       const posts = await PostService.getAllPosts(filters);
       res.json(posts);
     } catch (error) {
@@ -44,7 +49,11 @@ export class PostController {
    */
   static async createPost(req, res, next) {
     try {
-      const post = await PostService.createPost(req.body, req.user.id);
+      const post = await PostService.createPost(
+        req.body,
+        req.user.id,
+        req.user.role,
+      );
       res.status(201).json(post);
     } catch (error) {
       res.status(400).json({ error: error.message });

@@ -26,7 +26,7 @@ export default function NavBar({ title = "Dashboard" }: NavBarProps) {
           <ArrowLeft />
         </button>
       )}
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col items-center space-x-4">
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
         {profile && (
           <span className="text-sm text-muted-foreground">

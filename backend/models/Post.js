@@ -48,6 +48,7 @@ export class Post {
       id,
       brand_id,
       client_id,
+      manager_id,
       post_date,
       day_of_week,
       content_bucket,
@@ -66,15 +67,16 @@ export class Post {
 
     const result = await query(
       `INSERT INTO posts
-       (id, brand_id, client_id, post_date, day_of_week, content_bucket,
+       (id, brand_id, client_id, manager_id, post_date, day_of_week, content_bucket,
         format_label, format_type, format_variant, slide_count,
         headline, body_copy, visual_brief, caption, creative_link, creative, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING *`,
       [
         id,
         brand_id,
         client_id,
+        manager_id,
         post_date,
         day_of_week,
         content_bucket,

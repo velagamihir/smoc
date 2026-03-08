@@ -7,7 +7,7 @@ export class PostService {
    * Get all posts with optional filters
    */
   static async getAllPosts(filters = {}) {
-    const { brand_id = BRAND_ID, month, year, client_id } = filters;
+    const { brand_id = BRAND_ID, month, year, client_id, manager_id } = filters;
     let sql = "SELECT * FROM posts WHERE brand_id = $1";
     const params = [brand_id];
     let paramIdx = 2;
@@ -15,6 +15,12 @@ export class PostService {
     if (client_id) {
       sql += ` AND client_id = $${paramIdx}`;
       params.push(client_id);
+      paramIdx++;
+    }
+
+    if (manager_id) {
+      sql += ` AND manager_id = $${paramIdx}`;
+      params.push(manager_id);
       paramIdx++;
     }
 
@@ -48,7 +54,7 @@ export class PostService {
   /**
    * Create a new post
    */
-  static async createPost(postData, userId) {
+  static async createPost(postData, userId, userRole) {
     const {
       post_date,
       day_of_week,
@@ -85,7 +91,8 @@ export class PostService {
       creative_link,
       creative,
       status,
-      client_id: client_id || userId, // Use provided client_id or default to userId for clients
+      client_id: client_id || (userRole === "client" ? userId : null),
+      manager_id: userRole === "manager" ? userId : null,
     };
 
     return Post.create(newPost);
