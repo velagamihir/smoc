@@ -17,7 +17,13 @@ interface PostFormProps {
   clientId?: string;
   onSave: () => void;
 }
+function toLocalDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
+  return `${year}-${month}-${day}`;
+}
 export function PostForm({ date, clientId, onSave }: PostFormProps) {
   const { profile, managerClients } = useAuth();
   const [loading, setLoading] = useState(false);

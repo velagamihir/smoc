@@ -1,41 +1,35 @@
 import { v4 as uuidv4 } from "uuid";
 import { Post } from "../models/Post.js";
-import { BRAND_ID, ALLOWED_POST_FIELDS } from "../config/constants.js";
 import { query } from "../config/database.js";
 export class PostService {
   /**
    * Get all posts with optional filters
    */
   static async getAllPosts(filters = {}) {
-    const { brand_id = BRAND_ID, month, year, client_id, manager_id } = filters;
-    let sql = "SELECT * FROM posts WHERE brand_id = $1";
-    const params = [brand_id];
+    const { client_id, month, year } = filters;
+
+    if (!client_id) {
+      throw new Error("client_id is required");
+    }
+
+    let sql = "SELECT * FROM posts WHERE client_id = $1";
+    const params = [client_id];
     let paramIdx = 2;
-
-    if (client_id) {
-      sql += ` AND client_id = $${paramIdx}`;
-      params.push(client_id);
-      paramIdx++;
-    }
-
-    if (manager_id) {
-      sql += ` AND manager_id = $${paramIdx}`;
-      params.push(manager_id);
-      paramIdx++;
-    }
 
     if (month && year) {
       const fromDate = `${year}-${String(month).padStart(2, "0")}-01`;
+
       const nextMonth = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
       const nextYear = parseInt(month) === 12 ? parseInt(year) + 1 : year;
+
       const toDate = `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`;
 
       sql += ` AND post_date >= $${paramIdx} AND post_date < $${paramIdx + 1}`;
       params.push(fromDate, toDate);
-      paramIdx += 2;
     }
 
     sql += " ORDER BY post_date";
+
     const result = await query(sql, params);
     return result.rows;
   }

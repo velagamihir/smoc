@@ -107,9 +107,13 @@ export function CalendarPage() {
   const postsByDate = new Map<string, Post>();
 
   posts.forEach((p) => {
-    const date = new Date(p.post_date);
-    const dateKey = toLocalDateStr(date);
-    postsByDate.set(dateKey, p);
+    const d = new Date(p.post_date);
+
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate(),
+    ).padStart(2, "0")}`;
+
+    postsByDate.set(key, p);
   });
 
   const handleDateClick = (date: Date) => {

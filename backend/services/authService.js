@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jwt-simple";
-import { BRAND_ID } from "../config/constants.js";
 import { User, ManagerClient } from "../models/User.js";
 import { query } from "../config/database.js";
 import config from "../config/index.js";
@@ -68,7 +67,6 @@ export class AuthService {
       full_name: user.full_name,
       email: user.email,
       role: user.role,
-      brand_id: BRAND_ID,
       manager_clients,
     };
   }
