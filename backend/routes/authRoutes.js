@@ -30,5 +30,6 @@ router.post("/forgotten-password", AuthController.forgottenPassword);
  * Password must be at least 8 characters
  */
 router.post("/reset-password", AuthController.resetPassword);
+router.post('/change-password', AuthController.changePassword);
 
 export default router;
