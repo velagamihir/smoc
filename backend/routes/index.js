@@ -3,6 +3,7 @@ import authRoutes from "./authRoutes.js";
 import postRoutes from "./postRoutes.js";
 import commentRoutes from "./commentRoutes.js";
 import managerRoutes from "./managerRoutes.js";
+import superadminRoutes from "./superadminRoutes.js";
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.use("/auth", authRoutes);
 router.use("/posts", postRoutes);
 router.use("/comments", commentRoutes);
 router.use("/manager", managerRoutes);
+router.use("/superadmin", superadminRoutes);
 
 /**
  * Health check endpoint

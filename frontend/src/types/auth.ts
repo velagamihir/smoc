@@ -3,6 +3,7 @@ export type UserRole = "manager" | "client";
 export interface Profile {
   id: string;
   full_name: string;
+  email: string;
   role: UserRole;
   created_at: string;
 }

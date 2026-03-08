@@ -1,7 +1,7 @@
 import { Post } from "../types/post";
 import { PostDetail } from "../components/PostDetail";
 import { PostForm } from "../components/PostForm";
-import { XIcon, CalendarDaysIcon } from "lucide-react";
+import { XIcon, CalendarDaysIcon, EyeIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -29,7 +29,7 @@ export function SidePane({
   onPostCreated,
   onPostUpdated,
 }: SidePaneProps) {
-  const { profile, activeBrandId } = useAuth();
+  const { profile, activeBrandId, managerClients } = useAuth();
   const isManager = profile?.role === "manager";
 
   if (!selectedDate) return null;
@@ -53,14 +53,46 @@ export function SidePane({
             {formatDate(selectedDate)}
           </h2>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="shrink-0 -mr-2 h-8 w-8"
-        >
-          <XIcon className="size-3.5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {post && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Store post data for previews
+                const previewData = {
+                  clientName: "Client Name",
+                  caption: post.caption || "",
+                  creative: post.creative || "",
+                  headline: post.headline || "",
+                  body_copy: post.body_copy || "",
+                };
+                localStorage.setItem(
+                  "postPreviewData",
+                  JSON.stringify(previewData),
+                );
+
+                // Open preview pages
+                const baseUrl = window.location.origin;
+                window.open(`${baseUrl}/instagram-preview.html`, "_blank");
+                window.open(`${baseUrl}/linkedin-preview.html`, "_blank");
+                window.open(`${baseUrl}/facebook-preview.html`, "_blank");
+              }}
+              className="text-xs"
+            >
+              <EyeIcon className="size-3.5 mr-1" />
+              Preview
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="shrink-0 -mr-2 h-8 w-8"
+          >
+            <XIcon className="size-3.5" />
+          </Button>
+        </div>
       </div>
 
       {/* Content */}
@@ -70,7 +102,7 @@ export function SidePane({
         ) : isManager ? (
           <PostForm
             date={selectedDate}
-            brandId={activeBrandId ?? ""}
+            clientId={managerClients[0].client_id}
             onSave={onPostCreated}
           />
         ) : (

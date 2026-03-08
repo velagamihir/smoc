@@ -43,3 +43,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# readme files
+*.md
+frontend/*.md
+backend/*.md

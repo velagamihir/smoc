@@ -42,9 +42,23 @@ export class AuthService {
 
     const manager_clients = [];
 
-    // If user is a manager, fetch their clients
+    // If user is a manager, fetch their clients from users table
     if (user.role === "manager") {
-      manager_clients.push(...(await ManagerClient.findByManagerId(user.id)));
+      const clientList = await User.findClientsByManagerId(user.id);
+      manager_clients.push(
+        ...clientList.map((client) => ({
+          id: client.id,
+          manager_id: client.manager_id,
+          client_id: client.id,
+          client_profile: {
+            id: client.id,
+            full_name: client.full_name,
+            email: client.email,
+            role: client.role,
+            created_at: client.created_at,
+          },
+        })),
+      );
     }
 
     return {

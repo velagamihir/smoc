@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronDownIcon,
   LogOutIcon,
+  UserPlus,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarGrid } from "../components/CalendarGrid";
@@ -15,11 +16,6 @@ import { getPosts } from "../lib/api";
 import { Post } from "../types/post";
 import { useAuth } from "../contexts/AuthContext";
 import { cn } from "../lib/utils";
-
-const FETCH_MONTHS = [
-  { month: 2, year: 2026 },
-  { month: 3, year: 2026 },
-];
 
 function toLocalDateStr(date: Date): string {
   const y = date.getFullYear();
@@ -53,28 +49,56 @@ export function CalendarPage() {
     loading,
     signOut,
   } = useAuth();
+
   const navigate = useNavigate();
   const time = new Date();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(time);
   const [clientDropOpen, setClientDropOpen] = useState(false);
 
+  const isManager = profile?.role === "manager";
+
   // Auth guard
   useEffect(() => {
     if (!loading && !profile) navigate("/login");
   }, [loading, profile, navigate]);
 
+  // Auto select first client
+  useEffect(() => {
+    if (
+      profile?.role === "manager" &&
+      managerClients.length > 0 &&
+      !activeBrandId
+    ) {
+      setActiveBrandId(managerClients[0].client_id);
+    }
+  }, [profile?.role, managerClients, activeBrandId, setActiveBrandId]);
+
   const fetchPosts = useCallback(async () => {
-    if (!activeBrandId) return;
-    const results = await Promise.all(
-      FETCH_MONTHS.map(({ month, year }) =>
-        getPosts(activeBrandId, month, year),
-      ),
-    );
-    setPosts(results.flat());
-  }, [activeBrandId]);
+    if (isManager && managerClients.length === 0) return;
+
+    const clientId = isManager ? activeBrandId : profile?.id;
+    if (!clientId) return;
+
+    const month = currentMonth.getMonth() + 1;
+    const year = currentMonth.getFullYear();
+
+    try {
+      const results = await getPosts(clientId, month, year);
+      setPosts(results);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+    }
+  }, [
+    isManager,
+    managerClients.length,
+    activeBrandId,
+    profile?.id,
+    currentMonth,
+  ]);
 
   useEffect(() => {
     fetchPosts();
@@ -101,11 +125,11 @@ export function CalendarPage() {
   useEffect(() => {
     if (selectedDate)
       setSelectedPost(postsByDate.get(toLocalDateStr(selectedDate)) ?? null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts]);
 
   const prevMonth = () =>
     setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+
   const nextMonth = () =>
     setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
 
@@ -117,10 +141,16 @@ export function CalendarPage() {
     ),
   ).length;
 
-  // Active client label for manager dropdown
-  const activeClient = managerClients.find((c) => c.brand_id === activeBrandId);
+  const activeClient = managerClients.find(
+    (c) => c.client_id === activeBrandId,
+  );
+
   const activeBrandName =
-    activeClient?.brand?.name ?? profile?.full_name ?? "Calendar";
+    managerClients.length === 0
+      ? "No clients"
+      : (activeClient?.client_profile?.full_name ??
+        managerClients[0]?.client_profile?.full_name ??
+        "Client");
 
   if (loading || !profile) {
     return (
@@ -132,67 +162,79 @@ export function CalendarPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* ── Calendar panel ── */}
       <div
         className={`flex flex-col min-w-0 transition-[flex,width] duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${paneOpen ? "flex-1" : "w-full"}`}
       >
-        {/* Header */}
+        {/* HEADER */}
         <header className="flex items-center justify-between px-6 py-3 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-4">
-            {/* SMOC wordmark */}
             <span className="text-sm font-bold tracking-tight">SMOC</span>
 
-            {/* Client selector — always visible, only clickable if multiple clients */}
+            {/* CLIENT SELECTOR */}
             <div className="relative pl-4 border-l border-border/40">
               {profile.role === "manager" ? (
                 <>
                   <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                     Client
                   </div>
-                  {managerClients.length > 1 ? (
-                    <button
-                      onClick={() => setClientDropOpen((v) => !v)}
-                      className="flex items-center gap-1 text-sm font-semibold hover:text-foreground/80 transition-colors"
-                    >
-                      {activeBrandName}
-                      <ChevronDownIcon className="size-3.5 text-muted-foreground" />
-                    </button>
-                  ) : (
-                    <span className="text-sm font-semibold">
-                      {activeBrandName}
+
+                  {managerClients.length === 0 && (
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      No clients
                     </span>
                   )}
-                  {clientDropOpen && (
-                    <div className="absolute top-10 left-0 z-50 min-w-[180px] rounded-xl border border-border/40 bg-background shadow-xl overflow-hidden">
-                      {managerClients.map((mc) => (
-                        <button
-                          key={mc.brand_id}
-                          onClick={() => {
-                            setActiveBrandId(mc.brand_id);
-                            setClientDropOpen(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-4 py-2.5 text-sm hover:bg-accent/30 transition-colors",
-                            mc.brand_id === activeBrandId &&
-                              "text-violet-400 font-medium",
-                          )}
-                        >
-                          {mc.brand?.name}
-                          <span className="block text-[10px] text-muted-foreground font-normal">
-                            {mc.client_profile?.full_name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+
+                  {managerClients.length === 1 && (
+                    <span className="text-sm font-semibold">
+                      {managerClients[0]?.client_profile?.full_name}
+                    </span>
+                  )}
+
+                  {managerClients.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setClientDropOpen((v) => !v);
+                        }}
+                        className="flex items-center gap-1 text-sm font-semibold hover:text-foreground/80 transition-colors"
+                      >
+                        {activeBrandName}
+                        <ChevronDownIcon className="size-3.5 text-muted-foreground" />
+                      </button>
+
+                      {clientDropOpen && (
+                        <div className="absolute top-10 left-0 z-50 min-w-[180px] rounded-xl border border-border/40 bg-background shadow-xl overflow-hidden">
+                          {managerClients.map((mc) => (
+                            <button
+                              key={mc.client_id}
+                              onClick={() => {
+                                setActiveBrandId(mc.client_id);
+                                setClientDropOpen(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-4 py-2.5 text-sm hover:bg-accent/30 transition-colors",
+                                mc.client_id === activeBrandId &&
+                                  "text-violet-400 font-medium",
+                              )}
+                            >
+                              {mc.client_profile?.full_name}
+                              <span className="block text-[10px] text-muted-foreground font-normal">
+                                {mc.client_profile?.email}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               ) : (
-                /* Client view: just show their own brand */
                 <span className="text-sm font-semibold">{activeBrandName}</span>
               )}
             </div>
 
-            {/* Month nav */}
+            {/* MONTH NAV */}
             <div className="flex items-center gap-1 pl-4 border-l border-border/40">
               <Button
                 variant="ghost"
@@ -202,10 +244,12 @@ export function CalendarPage() {
               >
                 <ChevronLeft className="size-4" />
               </Button>
+
               <span className="text-sm font-semibold w-40 text-center">
                 {MONTH_LABELS[currentMonth.getMonth() + 1]}{" "}
                 {currentMonth.getFullYear()}
               </span>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -217,24 +261,35 @@ export function CalendarPage() {
             </div>
           </div>
 
-          {/* Right: legend + user + logout */}
+          {/* RIGHT SIDE */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-orange-400 inline-block" />{" "}
+                <span className="size-2 rounded-full bg-orange-400 inline-block" />
                 Carousel
               </span>
+
               <span className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-blue-400 inline-block" />{" "}
+                <span className="size-2 rounded-full bg-blue-400 inline-block" />
                 Static
               </span>
+
               <span className="pl-3 border-l border-border/40">
                 {scheduledCount} post{scheduledCount !== 1 ? "s" : ""} this
                 month
               </span>
             </div>
 
-            {/* User + logout */}
+            {profile.role === "manager" && (
+              <Button
+                onClick={() => navigate("/manager/create-client")}
+                className="h-7 px-3 text-xs flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                <UserPlus className="size-3.5" />
+                Create Client
+              </Button>
+            )}
+
             <div className="flex items-center gap-2 pl-3 border-l border-border/40">
               <div className="text-right">
                 <div className="text-[11px] font-medium leading-none">
@@ -244,12 +299,12 @@ export function CalendarPage() {
                   {profile.role}
                 </div>
               </div>
+
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={signOut}
                 className="h-7 w-7"
-                title="Sign out"
               >
                 <LogOutIcon className="size-3.5" />
               </Button>
@@ -257,7 +312,7 @@ export function CalendarPage() {
           </div>
         </header>
 
-        {/* Calendar */}
+        {/* CALENDAR */}
         <main className="flex-1 flex flex-col min-h-0">
           <CalendarGrid
             month={currentMonth}
@@ -268,7 +323,7 @@ export function CalendarPage() {
         </main>
       </div>
 
-      {/* ── Side pane ── */}
+      {/* SIDE PANE */}
       <AnimatePresence>
         {paneOpen && (
           <motion.div

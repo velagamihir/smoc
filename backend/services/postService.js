@@ -1,14 +1,43 @@
 import { v4 as uuidv4 } from "uuid";
 import { Post } from "../models/Post.js";
 import { BRAND_ID, ALLOWED_POST_FIELDS } from "../config/constants.js";
-
+import { query } from "../config/database.js";
 export class PostService {
   /**
    * Get all posts with optional filters
    */
   static async getAllPosts(filters = {}) {
-    const { brand_id = BRAND_ID, month, year } = filters;
-    return Post.findAll({ brand_id, month, year });
+    const { brand_id = BRAND_ID, month, year, client_id, manager_id } = filters;
+    let sql = "SELECT * FROM posts WHERE brand_id = $1";
+    const params = [brand_id];
+    let paramIdx = 2;
+
+    if (client_id) {
+      sql += ` AND client_id = $${paramIdx}`;
+      params.push(client_id);
+      paramIdx++;
+    }
+
+    if (manager_id) {
+      sql += ` AND manager_id = $${paramIdx}`;
+      params.push(manager_id);
+      paramIdx++;
+    }
+
+    if (month && year) {
+      const fromDate = `${year}-${String(month).padStart(2, "0")}-01`;
+      const nextMonth = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
+      const nextYear = parseInt(month) === 12 ? parseInt(year) + 1 : year;
+      const toDate = `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`;
+
+      sql += ` AND post_date >= $${paramIdx} AND post_date < $${paramIdx + 1}`;
+      params.push(fromDate, toDate);
+      paramIdx += 2;
+    }
+
+    sql += " ORDER BY post_date";
+    const result = await query(sql, params);
+    return result.rows;
   }
 
   /**
@@ -25,7 +54,7 @@ export class PostService {
   /**
    * Create a new post
    */
-  static async createPost(postData) {
+  static async createPost(postData, userId, userRole) {
     const {
       post_date,
       day_of_week,
@@ -42,6 +71,7 @@ export class PostService {
       creative,
       status = "draft",
       brand_id = BRAND_ID,
+      client_id,
     } = postData;
 
     const newPost = {
@@ -61,6 +91,8 @@ export class PostService {
       creative_link,
       creative,
       status,
+      client_id: client_id || (userRole === "client" ? userId : null),
+      manager_id: userRole === "manager" ? userId : null,
     };
 
     return Post.create(newPost);

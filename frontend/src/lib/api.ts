@@ -32,12 +32,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 // ── Posts ──────────────────────────────────────────────────────
 export const getPosts = (
-  brandId?: string,
+  clientId?: string,
   month?: number,
   year?: number,
 ): Promise<Post[]> => {
   const params = new URLSearchParams();
-  if (brandId) params.set("brand_id", brandId);
+  if (clientId) params.set("client_id", clientId);
   if (month !== undefined) params.set("month", String(month));
   if (year !== undefined) params.set("year", String(year));
   const qs = params.toString();
