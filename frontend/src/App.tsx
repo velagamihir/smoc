@@ -11,6 +11,7 @@ import { CalendarPage } from "@/components/CalendarPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import CreateClientPage from "./pages/CreateClientPage";
+import ChangePassword from "./pages/ChangePassword";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -68,6 +69,14 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={["manager"]}>
                 <CreateClientPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
               </ProtectedRoute>
             }
           />

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-
+import Notification from "@/components/ui/Notifications";
 // ── Types ──────────────────────────────────────────────────────
 export interface SignInPageProps {
   onSignIn: (email: string, password: string) => Promise<void>;
@@ -24,6 +24,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+   const [notification, setNotification] = useState(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

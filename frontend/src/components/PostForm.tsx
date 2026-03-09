@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ImageIcon, XIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
+import Notification from "@/components/ui/Notifications";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,7 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
   const [creative, setCreative] = useState<string | null>(null);
   const [creativeName, setCreativeName] = useState<string | null>(null);
   const [status, setStatus] = useState<PostStatus>("draft");
+  const [notification, setNotification] = useState(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -95,6 +97,10 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
 
       await createPost(payload);
       onSave();
+      setNotification({
+        type: "success",
+        message: "Form Created Successfully",
+      });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save post");
     } finally {
@@ -113,6 +119,13 @@ export function PostForm({ date, clientId, onSave }: PostFormProps) {
 
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">
+              {notification && (
+                <Notification
+                  message={notification.message}
+                  type={notification.type}
+                  onClose={() => setNotification(null)}
+                />
+              )}
               Content Bucket <span className="text-destructive">*</span>
             </label>
             <input
