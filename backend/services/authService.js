@@ -5,6 +5,29 @@ import { query } from "../config/database.js";
 import config from "../config/index.js";
 
 export class AuthService {
+  // Change user password based upon his previous password and email
+  static async changePassword(
+    email,
+    password,
+    newPassword,
+    confirmNewPassword,
+  ) {
+    const user = await User.findByEmail(email);
+    // Verify password using pgcrypto
+    const passwordMatch = await query(
+      "SELECT ($1 = crypt($2, $1)) as password_match",
+      [user.password_hash, password],
+    );
+
+    if (!passwordMatch.rows[0].password_match) {
+      throw new Error("Wrong Password Entered");
+    }
+    if (newPassword !== confirmNewPassword) {
+      throw new Error("Passwords do not match");
+    }
+    const result = await User.updatePasswordByEmail(email, newPassword);
+    return { success: true, message: "Password changed successfully" };
+  }
   /**
    * Authenticate user and generate JWT token using database
    */

@@ -3,6 +3,34 @@ import { sendForgottenPasswordEmail } from "../services/emailService.js";
 import { User } from "../models/User.js";
 
 export class AuthController {
+  // Handle change password request after user logs in
+  static async changePassword(req, res, next) {
+    try {
+      const { email, password, newPassword, confirmNewPassword } = req.body;
+      if (!email || !password || !newPassword || !confirmNewPassword) {
+        const error = new Error("All fields are required");
+        error.statusCode = 400;
+        throw error;
+      }
+      const result = await AuthService.changePassword(
+        email,
+        password,
+        newPassword,
+        confirmNewPassword,
+      );
+      res.status(200).json({
+        status: "ok",
+        message: "Password change successful",
+      });
+    } catch (error) {
+      const message = error.message || "Internal Server Error";
+      const statusCode = error.statusCode || 500;
+      res.status(statusCode).send({
+        status: "error",
+        message: message,
+      });
+    }
+  }
   /**
    * Handle login request
    */
