@@ -4,7 +4,9 @@ import { PostForm } from "../components/PostForm";
 import { XIcon, CalendarDaysIcon, EyeIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
-
+import { useState } from "react";
+import { InstagramPreview } from "./ui/InstagramPreview";
+import { SocialPreview } from "./ui/SocialMediaPreview";
 interface SidePaneProps {
   selectedDate: Date | null;
   post: Post | null;
@@ -31,7 +33,7 @@ export function SidePane({
 }: SidePaneProps) {
   const { profile, activeBrandId, managerClients } = useAuth();
   const isManager = profile?.role === "manager";
-
+  const [showPreview, setShowPreview] = useState(false);
   if (!selectedDate) return null;
 
   return (
@@ -58,26 +60,7 @@ export function SidePane({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                // Store post data for previews
-                const previewData = {
-                  clientName: "Client Name",
-                  caption: post.caption || "",
-                  creative: post.creative || "",
-                  headline: post.headline || "",
-                  body_copy: post.body_copy || "",
-                };
-                localStorage.setItem(
-                  "postPreviewData",
-                  JSON.stringify(previewData),
-                );
-
-                // Open preview pages
-                const baseUrl = window.location.origin;
-                window.open(`${baseUrl}/instagram-preview.html`, "_blank");
-                window.open(`${baseUrl}/linkedin-preview.html`, "_blank");
-                window.open(`${baseUrl}/facebook-preview.html`, "_blank");
-              }}
+              onClick={() => setShowPreview(!showPreview)}
               className="text-xs"
             >
               <EyeIcon className="size-3.5 mr-1" />
@@ -113,6 +96,11 @@ export function SidePane({
           </div>
         )}
       </div>
+      {post && showPreview && (
+        <div className="p-4 bg-gray-50 overflow-auto">
+          <SocialPreview post={post} />
+        </div>
+      )}
     </div>
   );
 }
