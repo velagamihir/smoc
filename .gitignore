@@ -20,7 +20,6 @@ backend/node_modules/
 backend/.env.local
 backend/.env.example
 backend/config/constants.js
-*.sql
  *.md 
 
 # OS
